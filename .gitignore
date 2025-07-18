@@ -1,0 +1,83 @@
+node_modules
+dist
+out
+.DS_Store
+.eslintcache
+*.log*
+*.db
+
+pnpm-lock.yaml
+.vscode
+
+# Build outputs
+build/
+release/
+app/
+*.tgz
+*.tar.gz
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.development
+.env.*.local
+
+# IDE and editor files
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+.vscode/settings.json
+.vscode/launch.json
+
+# OS generated files
+Thumbs.db
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+.parcel-cache/
+.vite/
+
+# Coverage and testing
+coverage/
+.nyc_output/
+*.lcov
+
+# Electron specific
+app-update.yml
+dev-app-update.yml
+
+# AI/ML models and large files
+*.bin
+*.ggml
+*.onnx
+models/
+whisper-models/
+
+# Video processing temporary files
+*.mp4.tmp
+*.webm.tmp
+*.mov.tmp
+temp-video/
+processing/
+
+# Database backups
+*.db.backup
+*.sqlite.backup
+
+# TypeScript
+*.tsbuildinfo
+
+# ESLint cache
+.eslintcache

@@ -1,0 +1,30 @@
+{
+  "extends": "@electron-toolkit/tsconfig/tsconfig.web.json",
+  "include": [
+    "src/env.d.ts",
+    "src/**/*",
+    "src/**/*.tsx",
+    "electron/preload/*.d.ts",
+    "./electron/main/database/schema.ts",
+    "./electron/main/ipc/index.ts"
+  ],
+  "compilerOptions": {
+    "composite": true,
+    "esModuleInterop": true,
+    "allowJs": true,
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "src/*"
+      ],
+      "@src/*": [
+        "src/*"
+      ],
+      "@db/*": [
+        "./electron/main/database/*"
+      ]
+    }
+  }
+}
