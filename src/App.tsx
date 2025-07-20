@@ -18,8 +18,7 @@ export const trpcReact = createTRPCReact<AppRouter>()
 
 function App(): React.JSX.Element {
   const [isLoading, setIsLoading] = useState(true)
-  const { setIsProcessing, setProcessingStage, setProgress, setCurrentVideoId } =
-    useVideoProcessingStore()
+  const { reset } = useVideoProcessingStore()
 
   const [queryClient] = useState(() => new QueryClient())
   const [trpcClient] = useState(() =>
@@ -30,11 +29,7 @@ function App(): React.JSX.Element {
 
   //TODO: improve the start screen. There should be some better way
   useEffect(() => {
-    setIsProcessing(false)
-    setProcessingStage('')
-    setProgress(0)
-    setCurrentVideoId(null)
-
+    reset()
     const loadingScreen = document.getElementById('loading-screen')
     if (loadingScreen) {
       loadingScreen.classList.add('hidden')

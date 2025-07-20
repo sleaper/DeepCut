@@ -14,17 +14,20 @@ import { ClipDetailsModal } from '@/components/ClipDetailsModal'
 import { Clip } from '@db/schema'
 import { trpcReact } from '@/App'
 import { toast } from 'sonner'
+import { useVideoProcessingStore } from '@/lib/stores/videoProcessingStore'
 
 type ClipStatus = 'All' | 'pending' | 'produced' | 'posted' | 'error'
 
 interface ClipsGalleryProps {
   clips: Clip[]
+  page: 'home' | 'clips'
 }
 
-export const ClipsGallery = memo(({ clips }: ClipsGalleryProps) => {
+export const ClipsGallery = memo(({ clips, page }: ClipsGalleryProps) => {
   const [statusFilter, setStatusFilter] = useState<ClipStatus>('All')
   const [selectedClip, setSelectedClip] = useState<Clip | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+  const { setGeneratedClips, generatedClips } = useVideoProcessingStore()
 
   // Delete clip mutation
   const deleteClipMutation = trpcReact.clips.deleteClip.useMutation({
@@ -57,13 +60,13 @@ export const ClipsGallery = memo(({ clips }: ClipsGalleryProps) => {
     (clipId: string) => {
       if (confirm('Are you sure you want to delete this clip?')) {
         deleteClipMutation.mutate({ clipId })
+        setGeneratedClips([...generatedClips.filter((clip) => clip.id !== clipId)])
       }
     },
     [deleteClipMutation]
   )
 
   const handleRefresh = useCallback(() => {
-    // This could trigger a refetch if needed
     window.location.reload()
   }, [])
 
@@ -119,7 +122,7 @@ export const ClipsGallery = memo(({ clips }: ClipsGalleryProps) => {
               clip={clip}
               onClick={handleClipClick}
               onDelete={handleDeleteClip}
-              showDeleteButton={true}
+              showDeleteButton={page === 'clips'}
             />
           ))}
         </div>

@@ -23,25 +23,34 @@ export function HomePage() {
     setProcessingStage,
     progress,
     setProgress,
+    setGeneratedClips,
+    setClipsProgress,
     generatedClips,
+    clipsProgress,
     currentVideoId,
     setCurrentVideoId,
     reset
   } = useVideoProcessingStore()
 
-  const [pendingClipIds, setPendingClipIds] = React.useState<string[]>([])
   const [analysisComplete, setAnalysisComplete] = React.useState(false)
 
   const { data: tokenKeys, isLoading: isLoadingTokenKeys } =
     trpcReact.settings.getAllTokenKeys.useQuery()
 
-  // Only fetch existing clips when not processing and have a video ID
-  const { data: existingClips, refetch: refetchClips } = trpcReact.clips.getClipsForVideo.useQuery(
-    { videoId: currentVideoId || '' },
-    {
-      enabled: !!currentVideoId && !isProcessing
-    }
-  )
+  const { data: existingClips, refetch: refetchExistingClips } =
+    trpcReact.clips.getClipsForVideo.useQuery(
+      { videoId: currentVideoId || '' },
+      {
+        enabled: false,
+        onSuccess: (clips) => {
+          setGeneratedClips(clips)
+        }
+      }
+    )
+
+  console.log('current video ID', currentVideoId)
+  console.log('generated clips', generatedClips)
+  console.log('existing clips', existingClips)
 
   trpcReact.progress.subscribeToProgress.useSubscription(
     { videoId: currentVideoId || '' },
@@ -52,9 +61,9 @@ export function HomePage() {
         setProcessingStage(data.message)
         setProgress(data.progress)
 
-        if (data.clips && data.clips.length > 0) {
-          setAnalysisComplete(true)
-          setPendingClipIds(data.clips.map((clip) => clip.clipId))
+        if (data.clips) {
+          setClipsProgress(data.clips)
+          refetchExistingClips()
         }
 
         if (data.stage === 'complete') {
@@ -62,16 +71,14 @@ export function HomePage() {
           setProcessingStage('All clips produced successfully!')
           setProgress(100)
           setAnalysisComplete(false)
-          setPendingClipIds([])
           toast.success('Processing complete!')
-          refetchClips() // Refresh clips after completion
+          refetchExistingClips()
         }
       },
       onError: () => {
         toast.error('Failed to receive progress updates')
         setIsProcessing(false)
         setAnalysisComplete(false)
-        setPendingClipIds([])
       }
     }
   )
@@ -86,7 +93,6 @@ export function HomePage() {
       toast.error(`Submission failed: ${error.message}`)
       setIsProcessing(false)
       setAnalysisComplete(false)
-      setPendingClipIds([])
     }
   })
 
@@ -111,8 +117,9 @@ export function HomePage() {
     setProcessingStage('Submitting video...')
     setProgress(0)
     setAnalysisComplete(false)
-    setPendingClipIds([])
+
     videoSubmission.mutate({ videoId })
+    await refetchExistingClips()
   }
 
   if (isLoadingTokenKeys) {
@@ -189,10 +196,10 @@ export function HomePage() {
               <Progress value={progress} />
               <p className="text-sm text-muted-foreground">{processingStage}</p>
 
-              {analysisComplete && pendingClipIds.length > 0 && (
+              {analysisComplete && clipsProgress.length > 0 && (
                 <div className="mt-4 p-4 bg-blue-50 rounded-lg">
                   <p className="text-sm font-medium text-blue-800">
-                    AI Analysis Complete! Found {pendingClipIds.length} clips.
+                    AI Analysis Complete! Found {clipsProgress.length} clips.
                   </p>
                   <p className="text-xs text-blue-600 mt-1">
                     Now generating video clips... They will appear below as they're ready.
@@ -209,7 +216,7 @@ export function HomePage() {
           <h2 className="text-2xl font-bold mb-4">
             {isProcessing ? 'Completed Clips' : 'Generated Clips'}
           </h2>
-          <ClipsGallery clips={[...generatedClips, ...(existingClips || [])]} />
+          <ClipsGallery clips={generatedClips} page={'home'} />
         </div>
       )}
     </div>

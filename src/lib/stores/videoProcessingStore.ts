@@ -16,9 +16,11 @@ interface VideoProcessingState {
 
   // Generated clips
   generatedClips: Clip[]
+  clipsProgress: { clipId: string; progress: number }[]
 
   // Actions
   setCurrentVideoId: (videoId: string | null) => void
+  setClipsProgress: (clipsProgress: { clipId: string; progress: number }[]) => void
   setVideoUrl: (url: string) => void
   setIsProcessing: (processing: boolean) => void
   setProcessingStage: (stage: string) => void
@@ -39,13 +41,15 @@ const initialState = {
   processingStage: '',
   progress: 0,
   pipelineProgress: null,
-  generatedClips: []
+  generatedClips: [],
+  clipsProgress: []
 }
 
 export const useVideoProcessingStore = create<VideoProcessingState>()(
   persist(
     (set) => ({
       ...initialState,
+      setClipsProgress: (clipsProgress) => set({ clipsProgress }),
       setCurrentVideoId: (videoId) => set({ currentVideoId: videoId }),
       setVideoUrl: (url) => set({ videoUrl: url }),
       setIsProcessing: (processing) => set({ isProcessing: processing }),
