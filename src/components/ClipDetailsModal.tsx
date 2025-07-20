@@ -63,11 +63,13 @@ const SecureVideo = memo(
     if (typeof assetData === 'string') {
       if (variant === 'thumbnail') {
         return (
-          <img
+          <video
             src={assetData}
-            alt="Video thumbnail"
             className={className}
             style={{ objectFit: 'cover' }}
+            controls={false}
+            autoPlay={false}
+            loop={false}
           />
         )
       }
@@ -75,7 +77,7 @@ const SecureVideo = memo(
       // Player variant
       return (
         <video
-          key={`video-${clipId}`} // Stable key prevents recreation and play interruption
+          key={`video-${clipId}`}
           src={assetData}
           className={className}
           controls

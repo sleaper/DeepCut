@@ -66,7 +66,11 @@ function ClipsGalleryLoading() {
 }
 
 export function ClipsPage() {
-  const { data: clips, isLoading } = trpcReact.clips.getClips.useQuery({
+  const {
+    data: clips,
+    isLoading,
+    refetch
+  } = trpcReact.clips.getClips.useQuery({
     status: 'All',
     sortBy: 'createdAt',
     sortOrder: 'desc'
@@ -90,7 +94,7 @@ export function ClipsPage() {
         <h1 className="text-3xl font-bold tracking-tight">Clips Gallery</h1>
         <p className="text-muted-foreground">Browse and manage all generated video clips</p>
       </div>
-      <ClipsGallery clips={clips || []} page={'clips'} />
+      <ClipsGallery clips={clips || []} page={'clips'} clipsRefetch={refetch} />
     </div>
   )
 }

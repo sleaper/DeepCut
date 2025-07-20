@@ -216,7 +216,7 @@ export function HomePage() {
           <h2 className="text-2xl font-bold mb-4">
             {isProcessing ? 'Completed Clips' : 'Generated Clips'}
           </h2>
-          <ClipsGallery clips={generatedClips} page={'home'} />
+          <ClipsGallery clips={generatedClips} page={'home'} clipsRefetch={refetchExistingClips} />
         </div>
       )}
     </div>

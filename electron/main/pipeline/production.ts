@@ -274,13 +274,17 @@ async function generateSubtitlesAndAddToClip(
 
 const updateClipProgress = (clip: InferSelectModel<typeof clips>, progress: number): void => {
   const existingClipsInProgress = progressTracker.getProgress(clip.videoId)?.clips
-  const updatedProgress = existingClipsInProgress?.map((c) =>
-    c.clipId === clip.id ? { ...c, progress } : c
-  )
+
+  if (existingClipsInProgress) {
+    const clipToUpdate = existingClipsInProgress.find((c) => c.clipId === clip.id)
+    if (clipToUpdate) {
+      clipToUpdate.progress = progress
+    }
+  }
 
   progressTracker.updateProgress(clip.videoId, {
     stage: 'production',
-    clips: updatedProgress
+    clips: existingClipsInProgress
   })
 }
 

@@ -21,9 +21,10 @@ type ClipStatus = 'All' | 'pending' | 'produced' | 'posted' | 'error'
 interface ClipsGalleryProps {
   clips: Clip[]
   page: 'home' | 'clips'
+  clipsRefetch: () => void
 }
 
-export const ClipsGallery = memo(({ clips, page }: ClipsGalleryProps) => {
+export const ClipsGallery = memo(({ clips, page, clipsRefetch }: ClipsGalleryProps) => {
   const [statusFilter, setStatusFilter] = useState<ClipStatus>('All')
   const [selectedClip, setSelectedClip] = useState<Clip | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
@@ -67,8 +68,8 @@ export const ClipsGallery = memo(({ clips, page }: ClipsGalleryProps) => {
   )
 
   const handleRefresh = useCallback(() => {
-    window.location.reload()
-  }, [])
+    clipsRefetch()
+  }, [clipsRefetch])
 
   return (
     <div className="space-y-6">
