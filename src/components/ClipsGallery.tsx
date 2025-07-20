@@ -1,4 +1,4 @@
-import { memo, useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -24,7 +24,7 @@ interface ClipsGalleryProps {
   clipsRefetch: () => void
 }
 
-export const ClipsGallery = memo(({ clips, page, clipsRefetch }: ClipsGalleryProps) => {
+export const ClipsGallery = ({ clips, page, clipsRefetch }: ClipsGalleryProps) => {
   const [statusFilter, setStatusFilter] = useState<ClipStatus>('All')
   const [selectedClip, setSelectedClip] = useState<Clip | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
@@ -35,6 +35,7 @@ export const ClipsGallery = memo(({ clips, page, clipsRefetch }: ClipsGalleryPro
     onSuccess: () => {
       toast.success('Clip deleted successfully!')
       handleCloseModal()
+      clipsRefetch()
     },
     onError: (error) => {
       toast.error(`Failed to delete clip: ${error.message}`)
@@ -42,10 +43,12 @@ export const ClipsGallery = memo(({ clips, page, clipsRefetch }: ClipsGalleryPro
   })
 
   // Filter clips based on status
-  const filteredClips = clips.filter((clip) => {
-    if (statusFilter === 'All') return true
-    return clip.status === statusFilter
-  })
+  const filteredClips = useMemo(() => {
+    return clips.filter((clip) => {
+      if (statusFilter === 'All') return true
+      return clip.status === statusFilter
+    })
+  }, [clips, statusFilter])
 
   const handleClipClick = useCallback((clip: Clip) => {
     setSelectedClip(clip)
@@ -61,7 +64,7 @@ export const ClipsGallery = memo(({ clips, page, clipsRefetch }: ClipsGalleryPro
     (clipId: string) => {
       if (confirm('Are you sure you want to delete this clip?')) {
         deleteClipMutation.mutate({ clipId })
-        setGeneratedClips([...generatedClips.filter((clip) => clip.id !== clipId)])
+        setGeneratedClips(generatedClips.filter((clip) => clip.id !== clipId))
       }
     },
     [deleteClipMutation, setGeneratedClips, generatedClips]
@@ -106,7 +109,6 @@ export const ClipsGallery = memo(({ clips, page, clipsRefetch }: ClipsGalleryPro
         </CardContent>
       </Card>
 
-      {/* Clips Gallery */}
       {filteredClips.length === 0 ? (
         <Card>
           <CardContent className="pt-6">
@@ -119,7 +121,7 @@ export const ClipsGallery = memo(({ clips, page, clipsRefetch }: ClipsGalleryPro
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredClips.map((clip) => (
             <ClipCard
-              key={clip.id}
+              key={`${clip.id}-${clip.proposedTitle}-${clip.llmReason}-${clip.status}-${clip.updatedAt}`}
               clip={clip}
               onClick={handleClipClick}
               onDelete={handleDeleteClip}
@@ -130,7 +132,6 @@ export const ClipsGallery = memo(({ clips, page, clipsRefetch }: ClipsGalleryPro
         </div>
       )}
 
-      {/* Clip Details Modal */}
       <ClipDetailsModal
         clip={selectedClip}
         isOpen={isDetailModalOpen}
@@ -139,6 +140,6 @@ export const ClipsGallery = memo(({ clips, page, clipsRefetch }: ClipsGalleryPro
       />
     </div>
   )
-})
+}
 
 ClipsGallery.displayName = 'ClipsGallery'

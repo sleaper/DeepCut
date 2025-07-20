@@ -48,10 +48,6 @@ export function HomePage() {
       }
     )
 
-  console.log('current video ID', currentVideoId)
-  console.log('generated clips', generatedClips)
-  console.log('existing clips', existingClips)
-
   trpcReact.progress.subscribeToProgress.useSubscription(
     { videoId: currentVideoId || '' },
     {

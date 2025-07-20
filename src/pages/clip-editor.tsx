@@ -18,8 +18,7 @@ import {
   Wand2,
   RefreshCw,
   ExternalLink,
-  Volume2,
-  Folder
+  Volume2
 } from 'lucide-react'
 import { Clip } from '@db/schema'
 import { trpcReact } from '@/App'
@@ -100,7 +99,6 @@ export function ClipEditorPage() {
     }
   })
 
-  const showClipInFolderMutation = trpcReact.system.showClipInFolder.useMutation()
   const openExternalMutation = trpcReact.system.openExternal.useMutation()
 
   const produceClipsMutation = trpcReact.clips.produceClips.useMutation({
@@ -300,7 +298,6 @@ export function ClipEditorPage() {
       setIsPlaying(true)
       setSelectedClipIds(new Set([clip.id]))
 
-      // Stop playing when we reach the end time
       const startTime = Date.now()
       const expectedDuration = (clip.endTime - clip.startTime) * 1000
 
@@ -312,7 +309,7 @@ export function ClipEditorPage() {
         ) {
           setIsPlaying(false)
         } else if (isPlaying) {
-          setTimeout(checkTime, 100) // Check every 100ms
+          setTimeout(checkTime, 100)
         }
       }
       setTimeout(checkTime, 100)
@@ -489,13 +486,13 @@ export function ClipEditorPage() {
 
       {/* Video Player Section */}
       {videoId && videoUrl && (
-        <Card>
+        <Card className="max-w-6xl ">
           <CardHeader>
             <CardTitle>Video Player</CardTitle>
             <CardDescription>Preview and navigate through your video</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="aspect-video bg-black rounded-lg overflow-hidden">
+            <div className="aspect-video bg-black rounded-lg overflow-hidden max-w-4xl mx-auto">
               <ReactPlayer
                 ref={playerRef}
                 url={videoUrl}
@@ -696,18 +693,6 @@ export function ClipEditorPage() {
                           title="Preview clip"
                         >
                           <Play className="h-3 w-3" />
-                        </Button>
-
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            showClipInFolderMutation.mutate({ clipId: clip.id })
-                          }}
-                          title="Show in folder"
-                        >
-                          <Folder className="h-3 w-3" />
                         </Button>
 
                         <Button

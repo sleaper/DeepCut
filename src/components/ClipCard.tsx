@@ -168,9 +168,7 @@ export const ClipCard = memo(
 
     const handleDeleteClip = (e: React.MouseEvent, clipId: string) => {
       e.stopPropagation()
-      if (confirm('Are you sure you want to delete this clip?')) {
-        onDelete?.(clipId)
-      }
+      onDelete?.(clipId)
     }
 
     // Loading skeleton component
@@ -309,7 +307,6 @@ export const ClipCard = memo(
             </div>
           </div>
 
-          {/* Clip Info */}
           <div className="space-y-2">
             <h3 className="font-medium text-sm line-clamp-2">
               {clip.proposedTitle || `Clip ${clip.id}`}

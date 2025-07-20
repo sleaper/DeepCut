@@ -57,8 +57,8 @@ export const videoOperationRouter = t.router({
       }
 
       setImmediate(() => {
-        processVideo(newVideoId).catch((error: unknown) => {
-          logger.error('Background processing failed:', error)
+        processVideo(newVideoId).catch((error) => {
+          throw error
         })
       })
     }),
