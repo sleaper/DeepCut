@@ -61,6 +61,37 @@ export const clipsRouter = t.router({
 
       return newClips
     }),
+  getClipById: t.procedure.input(z.object({ clipId: z.string() })).query(async ({ input }) => {
+    const clip = await db.query.clips.findFirst({
+      where: eq(clips.id, input.clipId)
+    })
+    // Return null instead of undefined to avoid tRPC error
+    return clip || null
+  }),
+  getClipsByIds: t.procedure
+    .input(z.object({ clipIds: z.array(z.string()) }))
+    .query(async ({ input }) => {
+      if (!input.clipIds || input.clipIds.length === 0) {
+        return []
+      }
+      const foundClips = await db.query.clips.findMany({
+        where: inArray(clips.id, input.clipIds),
+        orderBy: [desc(clips.createdAt)]
+      })
+      return foundClips
+    }),
+  getClipsForVideo: t.procedure
+    .input(z.object({ videoId: z.string() }))
+    .query(async ({ input }) => {
+      if (!input.videoId) {
+        return []
+      }
+      const videoClips = await db.query.clips.findMany({
+        where: eq(clips.videoId, input.videoId),
+        orderBy: [desc(clips.createdAt)]
+      })
+      return videoClips
+    }),
 
   deleteClip: t.procedure.input(z.object({ clipId: z.string() })).mutation(async ({ input }) => {
     const clip = await db.query.clips.findFirst({
@@ -242,22 +273,10 @@ export const clipsRouter = t.router({
       const productionPromises = clipsToProduce.map(({ clip }) => produceClip(clip))
       const results = await Promise.all(productionPromises)
 
-      const successfulClips = results.filter((r) => r.success)
-      const failedClips = results.filter((r) => !r.success)
-
-      if (failedClips.length > 0) {
-        logger.error(`Failed to produce ${failedClips.length} clips:`, failedClips)
-      }
-
-      logger.info(
-        `✅ Production completed: ${successfulClips.length} successful, ${failedClips.length} failed`
-      )
-
       return {
         success: true,
-        message: `Successfully initiated production for ${successfulClips.length} clips.`,
-        successfulClips,
-        failedClips
+        message: `Produced ${results.length} clips successfully.`,
+        producedClipIds: results
       }
     })
 })

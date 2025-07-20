@@ -3,6 +3,7 @@ import { videos } from '@db/schema'
 import { eq } from 'drizzle-orm'
 import { transcribeVideo } from '@/utils/video'
 import { getVideoMetadata } from '@/utils/video'
+import { progressTracker } from '@/utils/progressTracker'
 
 export async function transcription(videoId: string) {
   try {
@@ -10,6 +11,11 @@ export async function transcription(videoId: string) {
 
     if (video && video.status === 'transcribed') {
       console.log(`✅ Video ${video.videoId} already transcribed, skipping`)
+      progressTracker.updateProgress(videoId, {
+        stage: 'transcription',
+        progress: 100,
+        message: 'Already transcribed'
+      })
       return
     }
 
@@ -28,10 +34,6 @@ export async function transcription(videoId: string) {
         publishedAt,
         status: 'transcribed'
       })
-
-      console.log(`📝 Transcribing video ${videoId}`)
-
-      return
     } else {
       await db
         .update(videos)

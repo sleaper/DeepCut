@@ -1,5 +1,4 @@
 import { existsSync, mkdirSync, chmodSync, readdirSync } from 'fs'
-import { spawn } from 'child_process'
 import path from 'path'
 import { ytDlpPath } from '@/index'
 

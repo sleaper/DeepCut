@@ -5,6 +5,7 @@ import { systemRouter } from './handlers/system'
 import { settingsRouter } from './handlers/settings'
 import { clipsRouter } from './handlers/clips'
 import { assetsRouter } from './handlers/assets'
+import { progressRouter } from './handlers/progress'
 
 export const router = t.router({
   videoOperations: videoOperationRouter,
@@ -12,7 +13,8 @@ export const router = t.router({
   system: systemRouter,
   settings: settingsRouter,
   clips: clipsRouter,
-  assets: assetsRouter
+  assets: assetsRouter,
+  progress: progressRouter
 })
 
 export type AppRouter = typeof router

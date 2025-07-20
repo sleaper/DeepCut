@@ -11,6 +11,7 @@ import { InferSelectModel } from 'drizzle-orm'
 import { ytDlpPath, clipsDir } from '@/index'
 import { spawn } from 'child_process'
 import { app, safeStorage } from 'electron'
+import { progressTracker } from '@/utils/progressTracker'
 
 interface DeepgramWord {
   word: string
@@ -271,23 +272,40 @@ async function generateSubtitlesAndAddToClip(
   await rm(srtPath)
 }
 
-export async function produceClip(
-  clip: InferSelectModel<typeof clips>
-): Promise<{ success: boolean; clipId: string; path?: string; errorMessage?: string }> {
+const updateClipProgress = (clip: InferSelectModel<typeof clips>, progress: number): void => {
+  const existingClipsInProgress = progressTracker.getProgress(clip.videoId)?.clips
+
+  if (existingClipsInProgress) {
+    const clipToUpdate = existingClipsInProgress.find((c) => c.clipId === clip.id)
+    if (clipToUpdate) {
+      clipToUpdate.progress = progress
+    }
+  }
+
+  progressTracker.updateProgress(clip.videoId, {
+    stage: 'production',
+    clips: existingClipsInProgress
+  })
+}
+
+export async function produceClip(clip: InferSelectModel<typeof clips>): Promise<string> {
   const clipOutputPath = path.resolve(clipsDir, `${clip.id}.mp4`)
   const audioPath = path.resolve(clipsDir, `${clip.id}.wav`)
 
   if (existsSync(clipOutputPath)) {
     logger.info(`Clip ${clip.id} already exists in filesystem. Skipping.`)
-    return { success: true, clipId: clip.id }
+    return clip.id
   }
 
   try {
-    logger.info(`Producing clip ${clip.proposedTitle} from video ${clip.videoId}`)
-
     await downloadClip(clip, clipOutputPath, ytDlpPath)
+    updateClipProgress(clip, 25)
+
     await extractAudio(clipOutputPath, audioPath)
+    updateClipProgress(clip, 50)
+
     const deepgramResponse = await getTranscriptFromDeepgram(audioPath)
+    updateClipProgress(clip, 75)
 
     await db
       .update(clips)
@@ -295,6 +313,7 @@ export async function produceClip(
       .where(eq(clips.id, clip.id))
 
     await generateSubtitlesAndAddToClip(clip, deepgramResponse, clipOutputPath)
+    updateClipProgress(clip, 100)
 
     await db
       .update(clips)
@@ -303,8 +322,7 @@ export async function produceClip(
       })
       .where(eq(clips.id, clip.id))
 
-    logger.info(`✅ Produced clip ${clip.id}`)
-    return { success: true, clipId: clip.id, path: clipOutputPath }
+    return clip.id
   } catch (error) {
     await db
       .update(clips)

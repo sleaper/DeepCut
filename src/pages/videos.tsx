@@ -24,7 +24,8 @@ import {
   RefreshCw,
   Scissors,
   Clock,
-  Play
+  Play,
+  Trash2
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { trpcReact } from '@/App'
@@ -34,6 +35,16 @@ export function VideosPage() {
   const [filteredVideos, setFilteredVideos] = useState<typeof videos>([])
   const [expandedVideos, setExpandedVideos] = useState<Set<string>>(new Set())
   const [statusFilter, setStatusFilter] = useState<string>('all')
+
+  const deleteVideoMutation = trpcReact.videos.deleteVideo.useMutation({
+    onSuccess: () => {
+      toast.success('Video deleted successfully')
+      refetch()
+    },
+    onError: (error) => {
+      toast.error(`Failed to delete video: ${error.message}`)
+    }
+  })
 
   useEffect(() => {
     if (!videos) {
@@ -102,6 +113,16 @@ export function VideosPage() {
   const handleRefresh = () => {
     refetch()
     toast.success('Videos refreshed')
+  }
+
+  const handleDeleteVideo = (videoId: string, title: string) => {
+    if (
+      confirm(
+        `Are you sure you want to delete "${title}" and all its associated clips? This action cannot be undone.`
+      )
+    ) {
+      deleteVideoMutation.mutate({ videoId })
+    }
   }
 
   if (isLoading) {
@@ -197,17 +218,31 @@ export function VideosPage() {
                       </TableCell>
                       <TableCell>{getStatusBadge(video.status)}</TableCell>
                       <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleOpenExternal(`https://youtube.com/watch?v=${video.videoId}`)
-                          }}
-                          title="Open on YouTube"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleOpenExternal(`https://youtube.com/watch?v=${video.videoId}`)
+                            }}
+                            title="Open on YouTube"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteVideo(video.videoId, video.title)
+                            }}
+                            title="Delete video and all clips"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                     {expandedVideos.has(video.videoId) && (
