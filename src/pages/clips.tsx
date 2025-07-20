@@ -21,6 +21,7 @@ import { Download, ExternalLink, Trash2, RefreshCw, Play, Share2, Wand2, Edit3 }
 import { Clip } from '@db/schema'
 import { toast } from 'sonner'
 import { trpcReact } from '@/App'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 type ClipStatus = Clip['status'] | 'All'
 
@@ -222,6 +223,21 @@ export function ClipsPage() {
           duration: Infinity
         })
         publishX.mutate({ clipId: selectedClip.id })
+        break
+      case 'youtube':
+        toast.info('YouTube Shorts publishing is coming soon!', {
+          description: 'This feature is currently in development.'
+        })
+        break
+      case 'tiktok':
+        toast.info('TikTok publishing is coming soon!', {
+          description: 'This feature is currently in development.'
+        })
+        break
+      case 'instagram':
+        toast.info('Instagram Reels publishing is coming soon!', {
+          description: 'This feature is currently in development.'
+        })
         break
       default:
         toast.error(`Unsupported platform: ${platform}`)
@@ -638,30 +654,41 @@ export function ClipsPage() {
                     <Label className="text-sm font-medium">Publish to Platforms</Label>
 
                     <div className="grid grid-cols-2 gap-2">
-                      <Button
-                        variant="outline"
-                        className="justify-start"
-                        onClick={() => handlePublish('youtube')}
-                        disabled={selectedClip?.status !== 'produced'}
-                      >
-                        YouTube Shorts
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="justify-start"
-                        onClick={() => handlePublish('tiktok')}
-                        disabled={selectedClip?.status !== 'produced'}
-                      >
-                        TikTok
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="justify-start"
-                        onClick={() => handlePublish('instagram')}
-                        disabled={selectedClip?.status !== 'produced'}
-                      >
-                        Instagram Reels
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="outline" className="justify-start" disabled>
+                            YouTube Shorts
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Coming soon</TooltipContent>
+                      </Tooltip>
+
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="justify-start"
+                            onClick={() => handlePublish('instagram')}
+                            disabled
+                          >
+                            Instagram Reels
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Coming soon</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="justify-start"
+                            onClick={() => handlePublish('instagram')}
+                            disabled
+                          >
+                            TikTok
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Coming soon</TooltipContent>
+                      </Tooltip>
                       <Button
                         variant="outline"
                         className="justify-start"

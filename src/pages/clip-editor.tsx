@@ -19,7 +19,8 @@ import {
   RefreshCw,
   Download,
   ExternalLink,
-  Volume2
+  Volume2,
+  Folder
 } from 'lucide-react'
 import { Clip } from '@db/schema'
 import { trpcReact } from '@/App'
@@ -65,23 +66,26 @@ export function ClipEditorPage() {
     return tokenKeys.includes('GEMINI_API_KEY') && tokenKeys.includes('DEEPGRAM_API_KEY')
   }, [tokenKeys])
 
-  const getClipsQuery = trpcReact.videos.getClips.useQuery(videoId, {
-    enabled: false,
-    onSuccess: (data) => {
-      console.log('DATA', data)
-      const loadedClips = data
-      setClips(loadedClips)
-      setIsLoadingClips(false)
-      if (loadedClips.length > 0) {
-        toast.success(`Loaded ${loadedClips.length} existing clip(s)`)
+  const getClipsQuery = trpcReact.clips.getClipsForVideo.useQuery(
+    { videoId },
+    {
+      enabled: false,
+      onSuccess: (data) => {
+        console.log('DATA', data)
+        const loadedClips = data
+        setClips(loadedClips)
+        setIsLoadingClips(false)
+        if (loadedClips.length > 0) {
+          toast.success(`Loaded ${loadedClips.length} existing clip(s)`)
+        }
+      },
+      onError: (error) => {
+        console.error('Failed to load clips:', error)
+        setIsLoadingClips(false)
+        toast.error('Failed to load existing clips')
       }
-    },
-    onError: (error) => {
-      console.error('Failed to load clips:', error)
-      setIsLoadingClips(false)
-      toast.error('Failed to load existing clips')
     }
-  })
+  )
   const manualAnalyzeMutation = trpcReact.videoOperations.manualAnalyze.useMutation({
     onSuccess: (data) => {
       setClips(data)
@@ -98,7 +102,7 @@ export function ClipEditorPage() {
     }
   })
 
-  const showInFolderMutation = trpcReact.system.showInFolder.useMutation()
+  const showClipInFolderMutation = trpcReact.system.showClipInFolder.useMutation()
   const openExternalMutation = trpcReact.system.openExternal.useMutation()
 
   const produceClipsMutation = trpcReact.clips.produceClips.useMutation({
@@ -706,19 +710,17 @@ export function ClipEditorPage() {
                           <Play className="h-3 w-3" />
                         </Button>
 
-                        {clip.finalClipPath && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              showInFolderMutation.mutate({ path: clip.finalClipPath! })
-                            }}
-                            title="Show in folder"
-                          >
-                            <Download className="h-3 w-3" />
-                          </Button>
-                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            showClipInFolderMutation.mutate({ clipId: clip.id })
+                          }}
+                          title="Show in folder"
+                        >
+                          <Folder className="h-3 w-3" />
+                        </Button>
 
                         <Button
                           size="sm"

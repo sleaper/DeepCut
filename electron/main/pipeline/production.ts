@@ -271,22 +271,20 @@ async function generateSubtitlesAndAddToClip(
   await rm(srtPath)
 }
 
-export async function produceClip(
-  clip: InferSelectModel<typeof clips>
-): Promise<{ success: boolean; clipId: string; path?: string; errorMessage?: string }> {
+export async function produceClip(clip: InferSelectModel<typeof clips>): Promise<string> {
   const clipOutputPath = path.resolve(clipsDir, `${clip.id}.mp4`)
   const audioPath = path.resolve(clipsDir, `${clip.id}.wav`)
 
   if (existsSync(clipOutputPath)) {
     logger.info(`Clip ${clip.id} already exists in filesystem. Skipping.`)
-    return { success: true, clipId: clip.id }
+    return clip.id
   }
 
   try {
-    logger.info(`Producing clip ${clip.proposedTitle} from video ${clip.videoId}`)
-
     await downloadClip(clip, clipOutputPath, ytDlpPath)
+
     await extractAudio(clipOutputPath, audioPath)
+
     const deepgramResponse = await getTranscriptFromDeepgram(audioPath)
 
     await db
@@ -303,8 +301,7 @@ export async function produceClip(
       })
       .where(eq(clips.id, clip.id))
 
-    logger.info(`✅ Produced clip ${clip.id}`)
-    return { success: true, clipId: clip.id, path: clipOutputPath }
+    return clip.id
   } catch (error) {
     await db
       .update(clips)

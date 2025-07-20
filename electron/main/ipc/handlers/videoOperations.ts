@@ -9,17 +9,19 @@ import { z } from 'zod'
 import { t } from '../trpc'
 import { transcription } from '../../pipeline/transcription'
 import { Clip, processVideoTranscriptAnalysis } from '../../pipeline/analysis'
+import { progressTracker } from '@/utils/progressTracker'
 
 export const videoOperationRouter = t.router({
   videoSubmission: t.procedure
-    .input(z.object({ videoUrl: z.url() }))
+    .input(z.object({ videoId: z.string() }))
     .mutation(async ({ input }) => {
-      const { videoUrl } = input
+      const { videoId } = input
 
-      const videoId = videoUrl.split('v=')[1]
-      if (!videoId) {
-        return { success: false, error: 'Could not determine video ID for this video.' }
-      }
+      progressTracker.updateProgress(videoId, {
+        stage: 'download',
+        progress: 20,
+        message: 'Downloading video...'
+      })
 
       const {
         videoId: newVideoId,

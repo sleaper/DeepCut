@@ -1,18 +1,6 @@
-import fs from 'fs'
-import { Transcript } from './ai'
 import { logger } from './logger'
 import { whisperManager } from './whisper-cpp'
-
-const timestampToSeconds = (ts: string): number => {
-  if (!ts) return 0
-  const parts = ts.split(':')
-  const secondsParts = parts[2].split(',')
-  const hours = parseInt(parts[0], 10)
-  const minutes = parseInt(parts[1], 10)
-  const seconds = parseInt(secondsParts[0], 10)
-  const milliseconds = parseInt(secondsParts[1], 10)
-  return hours * 3600 + minutes * 60 + seconds + milliseconds / 1000
-}
+import { progressTracker } from './progressTracker'
 
 /**
  * Transcribes an audio file using whisper.cpp addon.
@@ -23,7 +11,11 @@ const timestampToSeconds = (ts: string): number => {
  * @param options Optional transcription options
  * @returns A promise that resolves to the transcribed text in JSON format.
  */
-export const transcribeWavFile = async (filePath: string, modelName?: string): Promise<string> => {
+export const transcribeWavFile = async (
+  filePath: string,
+  videoId: string,
+  modelName?: string
+): Promise<string> => {
   try {
     logger.info(`Starting transcription for ${filePath} with whisper.cpp`)
 
@@ -41,6 +33,11 @@ export const transcribeWavFile = async (filePath: string, modelName?: string): P
       vadThreshold: 0.5,
       progressCallback: (progress) => {
         logger.info(`Transcription progress: ${progress.toFixed(1)}%`)
+        progressTracker.updateProgress(videoId, {
+          stage: 'transcription',
+          progress: progress,
+          message: 'Transcription in progress...'
+        })
       }
     })
 

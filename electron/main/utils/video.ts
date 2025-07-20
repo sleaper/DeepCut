@@ -5,6 +5,7 @@ import { logger } from './logger'
 import { initializeYTDlp } from './ytdlp'
 import { audioDir } from '@/index'
 import { existsSync } from 'fs'
+import { progressTracker } from './progressTracker'
 
 export const transcribeVideo = async (videoId: string): Promise<string> => {
   const ytdlp = await initializeYTDlp()
@@ -17,6 +18,13 @@ export const transcribeVideo = async (videoId: string): Promise<string> => {
   if (!existsSync(audioPath)) {
     logger.info(`Downloading audio for video ${videoId} to ${audioPath}`)
 
+    progressTracker.updateProgress(videoId, {
+      stage: 'download',
+      progress: 50,
+      message: 'Downloading audio...'
+    })
+
+    // Use execPromise with progress callback
     await ytdlp.execPromise([
       '--extract-audio',
       '--audio-format',
@@ -27,9 +35,13 @@ export const transcribeVideo = async (videoId: string): Promise<string> => {
       `${audioFile}.%(ext)s`,
       `https://www.youtube.com/watch?v=${videoId}`
     ])
-
-    logger.info(`Audio downloaded for ${videoId}`)
   }
+
+  progressTracker.updateProgress(videoId, {
+    stage: 'download',
+    progress: 100,
+    message: 'Download complete'
+  })
 
   try {
     await fs.access(audioPath)
@@ -40,7 +52,7 @@ export const transcribeVideo = async (videoId: string): Promise<string> => {
     throw new Error(`Audio file not found for ${videoId} after download attempt.`)
   }
 
-  const transcript = await transcribeWavFile(audioPath)
+  const transcript = await transcribeWavFile(audioPath, videoId)
 
   await fs.unlink(audioPath)
 

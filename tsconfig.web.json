@@ -6,7 +6,8 @@
     "src/**/*.tsx",
     "electron/preload/*.d.ts",
     "./electron/main/database/schema.ts",
-    "./electron/main/ipc/index.ts"
+    "./electron/main/ipc/index.ts",
+    "./electron/main/utils/progressTracker.ts"
   ],
   "compilerOptions": {
     "composite": true,

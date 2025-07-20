@@ -16,6 +16,9 @@
       ],
       "@db/*": [
         "./electron/main/database/*"
+      ],
+      "@/utils/*": [
+        "./electron/main/utils/*"
       ]
     }
   },
