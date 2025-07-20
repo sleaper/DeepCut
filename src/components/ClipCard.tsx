@@ -105,10 +105,18 @@ interface ClipCardProps {
   onDelete?: (clipId: string) => void
   showDeleteButton?: boolean
   isLoading?: boolean
+  progress?: number
 }
 
 export const ClipCard = memo(
-  ({ clip, onClick, onDelete, showDeleteButton = false, isLoading = false }: ClipCardProps) => {
+  ({
+    clip,
+    onClick,
+    onDelete,
+    showDeleteButton = false,
+    isLoading = false,
+    progress
+  }: ClipCardProps) => {
     const openExternal = trpcReact.system.openExternal.useMutation()
     const showClipInFolder = trpcReact.system.showClipInFolder.useMutation()
 
@@ -217,6 +225,21 @@ export const ClipCard = memo(
                   <span className="text-xs text-muted-foreground font-medium">
                     {clip.status === 'error' ? 'Error' : 'No Preview'}
                   </span>
+                </div>
+              </div>
+            )}
+
+            {/* Progress Bar */}
+            {progress !== undefined && progress >= 0 && progress < 100 && (
+              <div className="absolute bottom-0 left-0 right-0 bg-black/20 backdrop-blur-sm">
+                <div className="h-1 bg-muted/30 overflow-hidden">
+                  <div
+                    className="h-full bg-primary transition-all duration-300 ease-out"
+                    style={{ width: `${Math.min(Math.max(progress, 0), 100)}%` }}
+                  />
+                </div>
+                <div className="px-2 py-1">
+                  <span className="text-xs text-white font-medium">{Math.round(progress)}%</span>
                 </div>
               </div>
             )}

@@ -28,7 +28,7 @@ export const ClipsGallery = memo(({ clips, page, clipsRefetch }: ClipsGalleryPro
   const [statusFilter, setStatusFilter] = useState<ClipStatus>('All')
   const [selectedClip, setSelectedClip] = useState<Clip | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
-  const { setGeneratedClips, generatedClips } = useVideoProcessingStore()
+  const { setGeneratedClips, generatedClips, clipsProgress } = useVideoProcessingStore()
 
   // Delete clip mutation
   const deleteClipMutation = trpcReact.clips.deleteClip.useMutation({
@@ -124,6 +124,7 @@ export const ClipsGallery = memo(({ clips, page, clipsRefetch }: ClipsGalleryPro
               onClick={handleClipClick}
               onDelete={handleDeleteClip}
               showDeleteButton={page === 'clips'}
+              progress={clipsProgress.find((p) => p.clipId === clip.id)?.progress || undefined}
             />
           ))}
         </div>
