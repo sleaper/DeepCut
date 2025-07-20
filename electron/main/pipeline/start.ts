@@ -48,7 +48,10 @@ export async function processVideo(videoId: string) {
       stage: 'analysis',
       progress: 100,
       message: 'Analysis complete',
-      clipsIds: newClips.map((clip) => clip.id)
+      clips: newClips.map((clip) => ({
+        clipId: clip.id,
+        progress: 0
+      }))
     })
 
     progressTracker.updateProgress(videoId, {
@@ -63,21 +66,19 @@ export async function processVideo(videoId: string) {
       const clip = newClips[i]
       const progress = Math.round((i / newClips.length) * 100)
 
-      // Update overall progress
       progressTracker.updateProgress(videoId, {
         progress,
         message: `Producing clip ${i + 1} of ${newClips.length}: ${clip.proposedTitle}`,
         stage: 'production'
       })
 
-      const newClipId = await produceClip(clip)
+      await produceClip(clip)
 
       // Update after completion
       progressTracker.updateProgress(videoId, {
         progress: Math.round(((i + 1) / newClips.length) * 100),
         message: `Completed clip ${i + 1} of ${newClips.length}`,
-        stage: 'production',
-        newClipId
+        stage: 'production'
       })
     }
 

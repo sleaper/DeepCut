@@ -1,5 +1,5 @@
 import { db } from '../../database'
-import { videos, clips } from '../../database/schema'
+import { videos, clips, Clip } from '../../database/schema'
 import { eq, and, inArray } from 'drizzle-orm'
 import { getVideoMetadata } from '../../utils/video'
 import { processVideo } from '../../pipeline/start'
@@ -8,7 +8,7 @@ import { produceClip } from '../../pipeline/production'
 import { z } from 'zod'
 import { t } from '../trpc'
 import { transcription } from '../../pipeline/transcription'
-import { Clip, processVideoTranscriptAnalysis } from '../../pipeline/analysis'
+import { processVideoTranscriptAnalysis } from '../../pipeline/analysis'
 import { progressTracker } from '@/utils/progressTracker'
 
 export const videoOperationRouter = t.router({
@@ -32,7 +32,7 @@ export const videoOperationRouter = t.router({
       } = await getVideoMetadata(videoId)
 
       if (!channelName) {
-        return { success: false, error: 'Could not determine channel name for this video.' }
+        throw new Error('Could not determine channel name for this video.')
       }
 
       const existingVideo = db.select().from(videos).where(eq(videos.videoId, newVideoId)).get()
@@ -61,7 +61,6 @@ export const videoOperationRouter = t.router({
           logger.error('Background processing failed:', error)
         })
       })
-      return { success: true, message: 'Video added and processing started.', videoId: newVideoId }
     }),
   produceClips: t.procedure
     .input(
@@ -91,15 +90,7 @@ export const videoOperationRouter = t.router({
       })
 
       const productionPromises = clipsToProduce.map(({ clip }) => produceClip(clip))
-      const results = await Promise.all(productionPromises)
-      const successfulClips = results.filter((r) => r.success)
-      const failedClips = results.filter((r) => !r.success)
-
-      if (failedClips.length > 0) {
-        logger.error(`Failed to produce ${failedClips.length} clips:`, failedClips)
-      }
-
-      return successfulClips
+      return await Promise.all(productionPromises)
     }),
 
   videoStatus: t.procedure.input(z.object({ videoId: z.string() })).query(async ({ input }) => {

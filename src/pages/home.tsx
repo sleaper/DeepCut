@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react'
+import React, { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useVideoProcessingStore } from '@/lib/stores/videoProcessingStore'
 import { trpcReact } from '@/App'
@@ -24,7 +24,6 @@ export function HomePage() {
     progress,
     setProgress,
     generatedClips,
-    setGeneratedClips,
     currentVideoId,
     setCurrentVideoId,
     reset
@@ -37,40 +36,12 @@ export function HomePage() {
     trpcReact.settings.getAllTokenKeys.useQuery()
 
   // Only fetch existing clips when not processing and have a video ID
-  const { data: existingClips } = trpcReact.clips.getClipsForVideo.useQuery(
+  const { data: existingClips, refetch: refetchClips } = trpcReact.clips.getClipsForVideo.useQuery(
     { videoId: currentVideoId || '' },
     {
       enabled: !!currentVideoId && !isProcessing
     }
   )
-
-  useEffect(() => {
-    if (existingClips && !isProcessing) {
-      setGeneratedClips(existingClips)
-    }
-  }, [existingClips, setGeneratedClips, isProcessing])
-
-  // Progressive clip fetching for pending clips
-  const { data: fetchedClips } = trpcReact.clips.getClipsByIds.useQuery(
-    { clipIds: pendingClipIds },
-    {
-      enabled: pendingClipIds.length > 0,
-      refetchInterval: 2000
-    }
-  )
-
-  useEffect(() => {
-    if (fetchedClips && fetchedClips.length > 0) {
-      const existingIds = new Set(generatedClips.map((clip) => clip.id))
-      const newClips = fetchedClips.filter((clip) => !existingIds.has(clip.id))
-      if (newClips.length > 0) {
-        setGeneratedClips([...generatedClips, ...newClips])
-      }
-
-      const fetchedIds = new Set(fetchedClips.map((clip) => clip.id))
-      setPendingClipIds((prev) => prev.filter((id) => !fetchedIds.has(id)))
-    }
-  }, [fetchedClips, generatedClips, setGeneratedClips])
 
   trpcReact.progress.subscribeToProgress.useSubscription(
     { videoId: currentVideoId || '' },
@@ -81,15 +52,9 @@ export function HomePage() {
         setProcessingStage(data.message)
         setProgress(data.progress)
 
-        if (data.clipsIds && data.clipsIds.length > 0) {
+        if (data.clips && data.clips.length > 0) {
           setAnalysisComplete(true)
-          setPendingClipIds(data.clipsIds)
-        }
-
-        // Handle individual clip completion
-        if (data.newClipId) {
-          // Remove this clip from pending since it's now complete
-          setPendingClipIds((prev) => prev.filter((id) => id !== data.newClipId))
+          setPendingClipIds(data.clips.map((clip) => clip.clipId))
         }
 
         if (data.stage === 'complete') {
@@ -99,6 +64,7 @@ export function HomePage() {
           setAnalysisComplete(false)
           setPendingClipIds([])
           toast.success('Processing complete!')
+          refetchClips() // Refresh clips after completion
         }
       },
       onError: () => {
@@ -116,14 +82,6 @@ export function HomePage() {
   }, [tokenKeys])
 
   const videoSubmission = trpcReact.videoOperations.videoSubmission.useMutation({
-    onSuccess: (data) => {
-      if (!data.success) {
-        toast.error((data as { error?: string }).error || 'An unknown error occurred.')
-        setIsProcessing(false)
-        setAnalysisComplete(false)
-        setPendingClipIds([])
-      }
-    },
     onError: (error) => {
       toast.error(`Submission failed: ${error.message}`)
       setIsProcessing(false)
@@ -246,13 +204,12 @@ export function HomePage() {
         </Card>
       )}
 
-      {/* Show completed clips */}
-      {generatedClips.length > 0 && (
+      {(generatedClips.length > 0 || existingClips?.length) && (
         <div>
           <h2 className="text-2xl font-bold mb-4">
             {isProcessing ? 'Completed Clips' : 'Generated Clips'}
           </h2>
-          <ClipsGallery clips={generatedClips} />
+          <ClipsGallery clips={[...generatedClips, ...(existingClips || [])]} />
         </div>
       )}
     </div>

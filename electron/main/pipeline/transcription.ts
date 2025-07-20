@@ -34,10 +34,6 @@ export async function transcription(videoId: string) {
         publishedAt,
         status: 'transcribed'
       })
-
-      console.log(`📝 Transcribing video ${videoId}`)
-
-      return
     } else {
       await db
         .update(videos)

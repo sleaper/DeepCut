@@ -5,14 +5,17 @@ export interface PipelineProgress {
   stage: 'transcription' | 'analysis' | 'production' | 'download' | 'complete'
   progress: number
   message: string
-  clipsIds?: string[]
-  newClipId?: string
+  clips?: ClipProgress[]
+}
+
+export interface ClipProgress {
+  clipId: string
+  progress: number
 }
 
 class ProgressTracker extends EventEmitter {
   private progressMap = new Map<string, PipelineProgress>()
 
-  // Method to update progress (Subject notifies Observers)
   updateProgress(videoId: string, progress: Partial<PipelineProgress>) {
     const current = this.progressMap.get(videoId) || {
       videoId,

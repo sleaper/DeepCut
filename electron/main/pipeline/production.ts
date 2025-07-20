@@ -11,6 +11,7 @@ import { InferSelectModel } from 'drizzle-orm'
 import { ytDlpPath, clipsDir } from '@/index'
 import { spawn } from 'child_process'
 import { app, safeStorage } from 'electron'
+import { progressTracker } from '@/utils/progressTracker'
 
 interface DeepgramWord {
   word: string
@@ -271,6 +272,18 @@ async function generateSubtitlesAndAddToClip(
   await rm(srtPath)
 }
 
+const updateClipProgress = (clip: InferSelectModel<typeof clips>, progress: number): void => {
+  const existingClipsInProgress = progressTracker.getProgress(clip.videoId)?.clips
+  const updatedProgress = existingClipsInProgress?.map((c) =>
+    c.clipId === clip.id ? { ...c, progress } : c
+  )
+
+  progressTracker.updateProgress(clip.videoId, {
+    stage: 'production',
+    clips: updatedProgress
+  })
+}
+
 export async function produceClip(clip: InferSelectModel<typeof clips>): Promise<string> {
   const clipOutputPath = path.resolve(clipsDir, `${clip.id}.mp4`)
   const audioPath = path.resolve(clipsDir, `${clip.id}.wav`)
@@ -282,10 +295,13 @@ export async function produceClip(clip: InferSelectModel<typeof clips>): Promise
 
   try {
     await downloadClip(clip, clipOutputPath, ytDlpPath)
+    updateClipProgress(clip, 25)
 
     await extractAudio(clipOutputPath, audioPath)
+    updateClipProgress(clip, 50)
 
     const deepgramResponse = await getTranscriptFromDeepgram(audioPath)
+    updateClipProgress(clip, 75)
 
     await db
       .update(clips)
@@ -293,6 +309,7 @@ export async function produceClip(clip: InferSelectModel<typeof clips>): Promise
       .where(eq(clips.id, clip.id))
 
     await generateSubtitlesAndAddToClip(clip, deepgramResponse, clipOutputPath)
+    updateClipProgress(clip, 100)
 
     await db
       .update(clips)
