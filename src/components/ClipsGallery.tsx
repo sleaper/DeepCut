@@ -64,7 +64,7 @@ export const ClipsGallery = memo(({ clips, page, clipsRefetch }: ClipsGalleryPro
         setGeneratedClips([...generatedClips.filter((clip) => clip.id !== clipId)])
       }
     },
-    [deleteClipMutation]
+    [deleteClipMutation, setGeneratedClips, generatedClips]
   )
 
   const handleRefresh = useCallback(() => {

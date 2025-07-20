@@ -17,7 +17,6 @@ import {
   Loader2,
   Wand2,
   RefreshCw,
-  Download,
   ExternalLink,
   Volume2,
   Folder
@@ -71,7 +70,6 @@ export function ClipEditorPage() {
     {
       enabled: false,
       onSuccess: (data) => {
-        console.log('DATA', data)
         const loadedClips = data
         setClips(loadedClips)
         setIsLoadingClips(false)
@@ -108,19 +106,9 @@ export function ClipEditorPage() {
   const produceClipsMutation = trpcReact.clips.produceClips.useMutation({
     onSuccess: (result) => {
       if (result.success) {
-        if ('successfulClips' in result && 'failedClips' in result) {
-          toast.success(`Started production for ${result.successfulClips.length} clips`)
-          if (result.failedClips.length > 0) {
-            toast.error(`${result.failedClips.length} clips failed to start production`)
-          }
-        } else {
-          toast.success(result.message || 'Clip production started successfully')
-        }
-        // Refresh clips data
-        getClipsQuery.refetch()
-      } else {
-        toast.error(result.message || 'Failed to start clip production')
+        toast.info(result.message || 'Clip production started successfully')
       }
+      getClipsQuery.refetch()
     },
     onError: (error) => {
       toast.error(`Failed to produce clips: ${error.message}`)
